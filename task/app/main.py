@@ -1,18 +1,40 @@
+from typing import Any
 from task.app.client import DialClient
 from task.models.conversation import Conversation
 from task.models.message import Message
 from task.models.role import Role
 
 DEFAULT_SYSTEM_PROMPT = "You are an assistant who answers concisely and informatively."
-DIAL_ENDPOINT = "https://ai-proxy.lab.epam.com/openai/deployments/{model}/chat/completions"
+DIAL_ENDPOINT = (
+    "https://ai-proxy.lab.epam.com/openai/deployments/{model}/chat/completions"
+)
 
 
 def run(
-        deployment_name: str,
-        print_request: bool = True,
-        print_only_content: bool = False,
-        **kwargs
+    deployment_name: str,
+    print_request: bool = True,
+    print_only_content: bool = False,
+    *,
+    temperature: float | None = None,
+    top_p: float | None = None,
+    n: int | None = None,
+    seed: int | None = None,
+    max_tokens: int | None = None,
+    frequency_penalty: float | None = None,
+    presence_penalty: float | None = None,
+    stop: str | list[str] | None = None,
+    **kwargs: Any,
 ) -> None:
+    params = {
+        "temperature": temperature,
+        "top_p": top_p,
+        "n": n,
+        "seed": seed,
+        "max_tokens": max_tokens,
+        "frequency_penalty": frequency_penalty,
+        "presence_penalty": presence_penalty,
+        "stop": stop,
+    }
     client = DialClient(
         endpoint=DIAL_ENDPOINT,
         deployment_name=deployment_name,
@@ -23,11 +45,11 @@ def run(
     print("Type your question or 'exit' to quit.")
     while True:
         user_input = input("> ").strip()
-    
+
         if user_input.lower() == "exit":
             print("Exiting the chat. Goodbye!")
             break
-    
+
         conversation.add_message(Message(Role.USER, user_input))
 
         print("AI:")
@@ -35,6 +57,6 @@ def run(
             messages=conversation.get_messages(),
             print_request=print_request,
             print_only_content=print_only_content,
-            **kwargs
+            **{**params, **kwargs},
         )
         conversation.add_message(ai_message)
